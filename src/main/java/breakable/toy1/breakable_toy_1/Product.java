@@ -3,7 +3,8 @@ package breakable.toy1.breakable_toy_1;
 import java.time.LocalDate;
 
 public class Product {
-    private Long id = 1l;
+    private Long id = 0l;
+    private static Long idCounter = 0l;
     private String name;
     private String category;
     private Double unitPrice;
@@ -45,9 +46,11 @@ public class Product {
         this.updateDate = updateDate;
     }
 
-    private long assignId(){ return id++; }
+    private Long assignId(){ return ++idCounter; }
 
-    public long getId(){ return this.id; }
+    public Long getId(){ return this.id; }
+
+    public void setId(Long id){ this.id = id; }
 
     public String getName(){ return this.name; }
 
@@ -74,4 +77,8 @@ public class Product {
     public LocalDate getUpdateDate(){ return this.updateDate; }
 
     public void setUpdateDate(LocalDate newUpdateDate){ this.updateDate = newUpdateDate; }
+
+    public static void resetidCounter() {
+        idCounter = 0l;
+    }
 }
