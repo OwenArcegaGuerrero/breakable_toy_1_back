@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 public class ProductStorage {
     public ArrayList<Product> productStorage = new ArrayList<>();
 
-    private int obtainProductPositionById(Long id){
+    private int getProductPositionById(Long id){
         for(Product product : this.productStorage){
             if(product.getId() == id){
                 return this.productStorage.indexOf(product);
@@ -33,7 +33,7 @@ public class ProductStorage {
     }
 
     public Product getProductById(Long id) {
-        int position = obtainProductPositionById(id);
+        int position = getProductPositionById(id);
         if(position > -1){
             return this.productStorage.get(position);
         }
@@ -41,7 +41,7 @@ public class ProductStorage {
     }
 
     public void deleteProduct(Long id) throws Exception {
-        int position = obtainProductPositionById(id);
+        int position = getProductPositionById(id);
         if(position > -1){
             this.productStorage.remove(position);
         } else {
@@ -57,7 +57,7 @@ public class ProductStorage {
             throw new Exception("Invalid Product");
         }
 
-        int position = obtainProductPositionById(id);
+        int position = getProductPositionById(id);
         if(position > -1){
             this.productStorage.set(position, product);
         } else {
@@ -74,79 +74,21 @@ public class ProductStorage {
         productStorage.clear();
     }
 
-/*  public Iterator<Product> Iterator() { return this.productStorage.iterator(); }
+    public void outOfStock(Long id) throws Exception {
+        Product product = getProductById(id);
+        if (product == null) {
+            throw new Exception("Invalid id");
+        } else {
+            product.setQuantityInStock(0l);
+        }
+    }
 
-    public void sortByName() { this.productStorage.sort(ProductComparator.BY_NAME); }
-
-    public void sortByNameReverse() { this.productStorage.sort(ProductComparator.BY_NAME_DESC); }
-
-    public void sortByCategory() { this.productStorage.sort(ProductComparator.BY_CATEGORY); }
-
-    public void sortByCategoryReverse() { this.productStorage.sort(ProductComparator.BY_CATEGORY_DESC); }
-
-    public void sortByPrice() { this.productStorage.sort(ProductComparator.BY_PRICE); }
-
-    public void sortByPriceReverse() { this.productStorage.sort(ProductComparator.BY_PRICE_DESC); }
-
-    public void sortByStock() { this.productStorage.sort(ProductComparator.BY_STOCK); }
-
-    public void sortByStockReverse() { this.productStorage.sort(ProductComparator.BY_STOCK_DESC); }
-
-    public void sortByExpirationDate() { this.productStorage.sort(ProductComparator.BY_EXPIRATION_DATE); }
-
-    public void sortByExpirationDateReverse() { this.productStorage.sort(ProductComparator.BY_EXPIRATION_DATE_DESC); }
-
-    public void sortByNameThenByCategory() { this.productStorage.sort(ProductComparator.BY_NAME_THEN_CATEGORY); }
-
-    public void sortByNameReverseThenByCategory() { this.productStorage.sort(ProductComparator.BY_NAME_DESC_THEN_CATEGORY); }
-
-    public void sortByNameThenByCategoryReverse() { this.productStorage.sort(ProductComparator.BY_NAME_THEN_CATEGORY_DESC); }
-
-    public void sortByNameReverseThenByCategoryReverse() { this.productStorage.sort(ProductComparator.BY_NAME_DESC_THEN_CATEGORY_DESC); }
-
-    public void sortByNameThenByPrice() { this.productStorage.sort(ProductComparator.BY_NAME_THEN_PRICE); }
-
-    public void sortByNameReverseThenByPrice() { this.productStorage.sort(ProductComparator.BY_NAME_DESC_THEN_PRICE); }
-
-    public void sortByNameThenByPriceReverse() { this.productStorage.sort(ProductComparator.BY_NAME_THEN_PRICE_DESC); }
-
-    public void sortByNameReverseThenByPriceReverse() { this.productStorage.sort(ProductComparator.BY_NAME_DESC_THEN_PRICE_DESC); }
-
-    public void sortByNameThenStock() { this.productStorage.sort(ProductComparator.BY_NAME_THEN_STOCK); }
-
-    public void sortByNameReverseThenStock() { this.productStorage.sort(ProductComparator.BY_NAME_DESC_THEN_STOCK); }
-
-    public void sortByNameThenStockReverse() { this.productStorage.sort(ProductComparator.BY_NAME_THEN_STOCK_DESC); }
-
-    public void sortByNameReverseThenStockReverse() { this.productStorage.sort(ProductComparator.BY_NAME_DESC_THEN_STOK_DESC); }
-
-    public void sortByNameThenExpiration() { this.productStorage.sort(ProductComparator.BY_NAME_THEN_EXPIRATION); }
-
-    public void sortByNameReverseThenExpiration() { this.productStorage.sort(ProductComparator.BY_NAME_DESC_THEN_EXPIRATION); }
-
-    public void sortByNameThenExpirationReverse() { this.productStorage.sort(ProductComparator.BY_NAME_THEN_EXPIRATION_DESC); }
-
-    public void sortByNameReverseThenExpirationReverse() { this.productStorage.sort(ProductComparator.BY_NAME_DESC_THEN_EXPIRATION_DESC); }
-
-    public void sortByCategoryThenName() { this.productStorage.sort(ProductComparator.BY_CATEGORY_THEN_NAME); }
-
-    public void sortByCategoryReverseThenName() { this.productStorage.sort(ProductComparator.BY_CATEGORY_DESC_THEN_NAME); }
-
-    public void sortByCategoryThenNameReverse() { this.productStorage.sort(ProductComparator.BY_CATEGORY_THEN_NAME_DESC); }
-
-    public void sortByCategoryReverseThenNameReverse() { this.productStorage.sort(ProductComparator.BY_CATEGORY_DESC_THEN_NAME_DESC); }
-
-    public void sortByCategoryThenPrice() { this.productStorage.sort(ProductComparator.BY_CATEGORY_THEN_PRICE); }
-
-    public void sortByCategoryReverseThenPrice() { this.productStorage.sort(ProductComparator.BY_CATEGORY_DESC_THEN_PRICE); }
-
-    public void sortByCategoryReverseThenPriceReverse() { this.productStorage.sort(ProductComparator.BY_CATEGORY_DESC_THEN_PRICE_DESC); }
-
-    public void sortByCategoryThenStock() { this.productStorage.sort(ProductComparator.BY_CATEGORY_THEN_STOCK); }
-
-    public void sortByCategoryReverseThenStock() { this.productStorage.sort(ProductComparator.BY_CATEGORY_DESC_THEN_STOCK); }
-
-    public void sortByCategoryThenStockReverse() { this.productStorage.sort(ProductComparator.BY_CATEGORY_THEN_STOCK_DESC); }
-
-    public void sortByCategoryReverseThenStockReverse() { this.productStorage.sort(ProductComparator.BY_CATEGORY_DESC_THEN_STOCK_DESC); } */
+    public void inStock(Long id) throws Exception {
+        Product product = getProductById(id);
+        if(product == null){
+            throw new Exception("Invalid id");
+        } else {
+            product.setQuantityInStock(10l);
+        }
+    }
 }

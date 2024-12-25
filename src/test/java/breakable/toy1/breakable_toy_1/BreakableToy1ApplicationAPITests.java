@@ -25,21 +25,27 @@ import net.minidev.json.JSONArray;
 @TestPropertySource(properties = "server.port=9091")
 public class BreakableToy1ApplicationAPITests {
 
-    @Autowired
-    TestRestTemplate restTemplate;
+	@Autowired
+	TestRestTemplate restTemplate;
 
 	@Autowired
 	ProductStorage storage;
 
 	@BeforeEach
-	public void setUp() throws Exception{
+	public void setUp() throws Exception {
 		storage.clear();
 
-		Product product1 = new Product("Product A", "Category 1", 10.0, null, 50l, LocalDate.now(), LocalDate.now());
-		Product product2 = new Product("Product B", "Category 2", 12.0, LocalDate.now(), 50l, LocalDate.now(), LocalDate.now());
-		Product product3 = new Product("Product C", "Category 1", 15.0, null, 50l, LocalDate.now(), LocalDate.now());
-		Product product4 = new Product("Product D", "Category 2", 8.0, LocalDate.of(2025, 6, 10), 50l, LocalDate.now(), LocalDate.now());
-		Product product5 = new Product("Product E", "Category 3", 20.0, null, 50l, LocalDate.now(), LocalDate.now());
+		Product product1 = new Product("Product A", "Category 1", 10.0, null,
+				50l, LocalDate.now(), LocalDate.now());
+		Product product2 = new Product("Product B", "Category 2", 12.0,
+				LocalDate.now(), 50l, LocalDate.now(), LocalDate.now());
+		Product product3 = new Product("Product C", "Category 1", 15.0, null,
+				50l, LocalDate.now(), LocalDate.now());
+		Product product4 = new Product("Product D", "Category 2", 8.0, LocalDate.of(2025, 6, 10),
+				50l, LocalDate.now(),
+				LocalDate.now());
+		Product product5 = new Product("Product E", "Category 3", 20.0, null,
+				50l, LocalDate.now(), LocalDate.now());
 
 		storage.saveProduct(product1);
 		storage.saveProduct(product2);
@@ -48,8 +54,8 @@ public class BreakableToy1ApplicationAPITests {
 		storage.saveProduct(product5);
 	}
 
-    @Test
-	void ShouldGetProductById() throws Exception{
+	@Test
+	void ShouldGetProductById() throws Exception {
 		ResponseEntity<String> response = restTemplate.getForEntity("/products/1", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -80,14 +86,14 @@ public class BreakableToy1ApplicationAPITests {
 	}
 
 	@Test
-	void ShouldNotReturnProductWihtoutId(){
+	void ShouldNotReturnProductWihtoutId() {
 		ResponseEntity<String> response = restTemplate.getForEntity("/products/0", String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
-	void ShouldCreateProduct() throws Exception{
+	void ShouldCreateProduct() throws Exception {
 		Product newProduct = new Product("Product F", "Category 3", 5.0, null, 20l, LocalDate.now(), LocalDate.now());
 
 		ResponseEntity<String> response = restTemplate.postForEntity("/products/create", newProduct, String.class);
@@ -125,13 +131,13 @@ public class BreakableToy1ApplicationAPITests {
 	}
 
 	@Test
-	void ShouldNotCreateProductWithEmptyBody(){
+	void ShouldNotCreateProductWithEmptyBody() {
 		ResponseEntity<String> response = restTemplate.postForEntity("/products/create", null, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 	}
 
 	@Test
-	void ShouldReturnAllProducts(){
+	void ShouldReturnAllProducts() {
 		ResponseEntity<String> response = restTemplate.getForEntity("/products", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -143,33 +149,39 @@ public class BreakableToy1ApplicationAPITests {
 		assertThat(ids).isNotNull();
 
 		JSONArray names = documentContext.read("$..name");
-		assertThat(names).containsExactlyInAnyOrder("Product A","Product B","Product C","Product D","Product E");
+		assertThat(names).containsExactlyInAnyOrder("Product A", "Product B", "Product C", "Product D", "Product E");
 
 		JSONArray categories = documentContext.read("$..category");
-		assertThat(categories).containsExactlyInAnyOrder("Category 1","Category 2","Category 1","Category 2","Category 3");
+		assertThat(categories).containsExactlyInAnyOrder("Category 1", "Category 2", "Category 1", "Category 2",
+				"Category 3");
 
 		JSONArray prices = documentContext.read("$..unitPrice");
 		assertThat(prices).containsExactlyInAnyOrder(10.0, 12.0, 15.0, 8.0, 20.0);
 
 		JSONArray expirationDates = documentContext.read("$..expirationDate");
-		assertThat(expirationDates).containsExactlyInAnyOrder(null,LocalDate.now().toString(),null,LocalDate.of(2025, 6, 10).toString(),null);
+		assertThat(expirationDates).containsExactlyInAnyOrder(null, LocalDate.now().toString(), null,
+				LocalDate.of(2025, 6, 10).toString(), null);
 
 		JSONArray stocks = documentContext.read("$..quantityInStock");
-		assertThat(stocks).containsExactlyInAnyOrder(50,50,50,50,50);
+		assertThat(stocks).containsExactlyInAnyOrder(50, 50, 50, 50, 50);
 
 		JSONArray creationDates = documentContext.read("$..creationDate");
-		assertThat(creationDates).containsExactlyInAnyOrder(LocalDate.now().toString(),LocalDate.now().toString(),LocalDate.now().toString(),LocalDate.now().toString(),LocalDate.now().toString());
+		assertThat(creationDates).containsExactlyInAnyOrder(LocalDate.now().toString(), LocalDate.now().toString(),
+				LocalDate.now().toString(), LocalDate.now().toString(), LocalDate.now().toString());
 
 		JSONArray updateDates = documentContext.read("$..updateDate");
-		assertThat(updateDates).containsExactlyInAnyOrder(LocalDate.now().toString(),LocalDate.now().toString(),LocalDate.now().toString(),LocalDate.now().toString(),LocalDate.now().toString());
+		assertThat(updateDates).containsExactlyInAnyOrder(LocalDate.now().toString(), LocalDate.now().toString(),
+				LocalDate.now().toString(), LocalDate.now().toString(), LocalDate.now().toString());
 	}
 
 	@Test
-	void ShouldUpdateAProductById() throws Exception{
-		Product updateProduct = new Product("Product F", "Category 4", 10.0, LocalDate.of(2026, 1, 1), 60l, LocalDate.now(), LocalDate.now());
+	void ShouldUpdateAProductById() throws Exception {
+		Product updateProduct = new Product("Product F", "Category 4", 10.0, LocalDate.of(2026, 1, 1), 60l,
+				LocalDate.now(), LocalDate.now());
 		HttpEntity<Product> request = new HttpEntity<>(updateProduct);
 
-		ResponseEntity<Void> response = restTemplate.exchange("/products/update/1", HttpMethod.PUT, request, Void.class);
+		ResponseEntity<Void> response = restTemplate.exchange("/products/update/1", HttpMethod.PUT, request,
+				Void.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
 		ResponseEntity<String> responseGet = restTemplate.getForEntity("/products/1", String.class);
@@ -202,23 +214,26 @@ public class BreakableToy1ApplicationAPITests {
 	}
 
 	@Test
-	void ShouldNotUpdateWithInvalidId() throws Exception{
-		Product updateProduct = new Product("Product F", "Category 4", 10.0, LocalDate.of(2026, 1, 1), 60l, LocalDate.now(), LocalDate.now());
+	void ShouldNotUpdateWithInvalidId() throws Exception {
+		Product updateProduct = new Product("Product F", "Category 4", 10.0, LocalDate.of(2026, 1, 1), 60l,
+				LocalDate.now(), LocalDate.now());
 		HttpEntity<Product> request = new HttpEntity<>(updateProduct);
 
-		ResponseEntity<Void> response = restTemplate.exchange("/products/update/0", HttpMethod.PUT, request, Void.class);
+		ResponseEntity<Void> response = restTemplate.exchange("/products/update/0", HttpMethod.PUT, request,
+				Void.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 	}
 
 	@Test
-	void ShouldNotUpdateWithInvalidProduct() throws Exception{
+	void ShouldNotUpdateWithInvalidProduct() throws Exception {
 		ResponseEntity<Void> response = restTemplate.exchange("/products/update/1", HttpMethod.PUT, null, Void.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 	}
 
 	@Test
-	void ShouldDeleteAProductById(){
-		ResponseEntity<Void> response = restTemplate.exchange("/products/delete/1", HttpMethod.DELETE, null, Void.class);
+	void ShouldDeleteAProductById() {
+		ResponseEntity<Void> response = restTemplate.exchange("/products/delete/1", HttpMethod.DELETE, null,
+				Void.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
 		ResponseEntity<String> responseGet = restTemplate.getForEntity("/products/1", String.class);
@@ -226,8 +241,115 @@ public class BreakableToy1ApplicationAPITests {
 	}
 
 	@Test
-	void ShouldNotDeleteAProductWithoutValidId(){
-		ResponseEntity<Void> response = restTemplate.exchange("/products/delete/0",HttpMethod.DELETE,null, Void.class);
+	void ShouldNotDeleteAProductWithInvalidValidId() {
+		ResponseEntity<Void> response = restTemplate.exchange("/products/delete/0", HttpMethod.DELETE, null,
+				Void.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+
+	@Test
+	void ShouldMarkProductAsOutOfStockWithId() {
+		ResponseEntity<Void> response = restTemplate.postForEntity("/products/1/outofstock", null, Void.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+		ResponseEntity<String> getResponse = restTemplate.getForEntity("/products/1", String.class);
+		assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
+		Number stock = documentContext.read("$.quantityInStock");
+		assertThat(stock).isEqualTo(0);
+	}
+
+	@Test
+	void ShouldNotMarkProductOtOfStockWithInvalidId() {
+		ResponseEntity<Void> response = restTemplate.postForEntity("/products/0/outofstock", null, Void.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+
+	@Test
+	void ShouldMarkProductInStockById() {
+		restTemplate.postForEntity("/products/1/outOfStock", null, Void.class);
+		ResponseEntity<Void> response = restTemplate.exchange("/products/1/instock", HttpMethod.PUT, null, Void.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+		ResponseEntity<String> getResponse = restTemplate.getForEntity("/products/1", String.class);
+		assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
+		Number stock = documentContext.read("$.quantityInStock");
+		assertThat(stock).isEqualTo(10);
+	}
+
+	@Test
+	void ShouldFilterProductsByName() throws Exception {
+		Product newProduct = new Product("Product A", "Category 3", 5.0, null, 20l, LocalDate.now(), LocalDate.now());
+
+		ResponseEntity<String> postResponse = restTemplate.postForEntity("/products/create", newProduct, String.class);
+		assertThat(postResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+		ResponseEntity<String> response = restTemplate.getForEntity("/products?name=Product A", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray names = documentContext.read("$..name");
+		assertThat(names).containsExactlyInAnyOrder("Product A", "Product A");
+	}
+
+	@Test
+	void ShouldFilterProductsByCategory() {
+		ResponseEntity<String> response = restTemplate.getForEntity("/products?category=Category 1", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray categories = documentContext.read("$..category");
+		assertThat(categories).containsExactlyInAnyOrder("Category 1", "Category 1");
+	}
+
+	@Test
+	void ShouldFilterProducsByAvailability() {
+		restTemplate.postForEntity("/products/1/outofstock", null, Void.class);
+		restTemplate.postForEntity("/products/2/outofstock", null, Void.class);
+
+		ResponseEntity<String> response = restTemplate.getForEntity("/products?availability=false", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray stocksFalse = documentContext.read("$..quantityInStock");
+		assertThat(stocksFalse).containsExactlyInAnyOrder(0, 0);
+
+		response = restTemplate.getForEntity("/products?availability=true", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		documentContext = JsonPath.parse(response.getBody());
+		JSONArray stocksTrue = documentContext.read("$..quantityInStock");
+		assertThat(stocksTrue).containsExactlyInAnyOrder(50, 50, 50);
+	}
+
+	@Test
+	void ShouldFilterByMultipleFields() throws Exception {
+		restTemplate.postForEntity("/products/1/outofstock", null, Void.class);
+		restTemplate.exchange("/products/update/2", HttpMethod.PUT,
+				new HttpEntity<>(new Product("Product E", "Category 3", 5.0, null, 10l, null, null)), Void.class);
+
+		ResponseEntity<String> response = restTemplate.getForEntity("/products?name=Product E&category=Category 3",
+				String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray names = documentContext.read("$..name");
+		assertThat(names).containsExactlyInAnyOrder("Product E", "Product E");
+
+		JSONArray categories = documentContext.read("$..category");
+		assertThat(categories).containsExactlyInAnyOrder("Category 3", "Category 3");
+
+		response = restTemplate.getForEntity("/products?availability=true&category=Category 2", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		documentContext = JsonPath.parse(response.getBody());
+		JSONArray stocks = documentContext.read("$..quantityInStock");
+		assertThat(stocks).containsExactlyInAnyOrder(50);
+
+		categories = documentContext.read("$..category");
+		assertThat(categories).containsExactlyInAnyOrder("Category 2");
 	}
 }
