@@ -3,7 +3,8 @@ package breakable.toy1.breakable_toy_1;
 import java.time.LocalDate;
 
 public class Product {
-    private Long id = 1l;
+    private Long id = 0l;
+    private static Long idCounter = 0l;
     private String name;
     private String category;
     private Double unitPrice;
@@ -12,22 +13,23 @@ public class Product {
     private LocalDate creationDate;
     private LocalDate updateDate;
 
-    Product(String name, String category, Double unitPrice, LocalDate expirationDate, Long quantityInStock, LocalDate creationDate, LocalDate updateDate) throws Exception{
+    Product(String name, String category, Double unitPrice, LocalDate expirationDate, Long quantityInStock,
+            LocalDate creationDate, LocalDate updateDate) throws Exception {
         this.id = assignId();
-    
-        if(name == null || name.length() <= 0 || name.length() > 120){
+
+        if (name == null || name.length() <= 0 || name.length() > 120) {
             throw new Exception("Invalid name");
         } else {
             this.name = name;
         }
 
-        if(category == null || category.length() <= 0){
+        if (category == null || category.length() <= 0) {
             throw new Exception("Invalid category");
         } else {
             this.category = category;
         }
 
-        if(unitPrice == null || unitPrice <= 0.0){
+        if (unitPrice == null || unitPrice <= 0.0) {
             throw new Exception("Invalid Unit Price");
         } else {
             this.unitPrice = unitPrice;
@@ -35,43 +37,85 @@ public class Product {
 
         this.expirationDate = expirationDate;
 
-        if(quantityInStock == null || quantityInStock <= 0l) {
+        if (quantityInStock == null || quantityInStock <= 0l) {
             throw new Exception("Invalid Quantity In Stock");
         } else {
             this.quantityInStock = quantityInStock;
         }
-        
+
         this.creationDate = creationDate;
         this.updateDate = updateDate;
     }
 
-    private long assignId(){ return id++; }
+    private Long assignId() {
+        return ++idCounter;
+    }
 
-    public long getId(){ return this.id; }
+    public Long getId() {
+        return this.id;
+    }
 
-    public String getName(){ return this.name; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public void setName(String newName){ this.name = newName; }
+    public String getName() {
+        return this.name;
+    }
 
-    public String getCategory(){ return this.category; }
+    public void setName(String newName) {
+        this.name = newName;
+    }
 
-    public void setCategory(String newCategory){ this.category = newCategory; }
+    public String getCategory() {
+        return this.category;
+    }
 
-    public Double getUnitPrice(){ return this.unitPrice; }
+    public void setCategory(String newCategory) {
+        this.category = newCategory;
+    }
 
-    public void setUnitPrice(Double newUnitPrice){ this.unitPrice = newUnitPrice; }
+    public Double getUnitPrice() {
+        return this.unitPrice;
+    }
 
-    public LocalDate getExpirationDate(){ return this.expirationDate; }
+    public void setUnitPrice(Double newUnitPrice) {
+        this.unitPrice = newUnitPrice;
+    }
 
-    public void setExpirationDate(LocalDate newExpirationDate){ this.expirationDate = newExpirationDate; }
+    public LocalDate getExpirationDate() {
+        return this.expirationDate;
+    }
 
-    public long getQuantityInStock(){ return this.quantityInStock; }
+    public void setExpirationDate(LocalDate newExpirationDate) {
+        this.expirationDate = newExpirationDate;
+    }
 
-    public void setQuantityInStock(long newQuantityInStock){ this.quantityInStock = newQuantityInStock; }
+    public long getQuantityInStock() {
+        return this.quantityInStock;
+    }
 
-    public LocalDate getCreationDate(){ return this.creationDate; }
+    public void setQuantityInStock(long newQuantityInStock) {
+        this.quantityInStock = newQuantityInStock;
+    }
 
-    public LocalDate getUpdateDate(){ return this.updateDate; }
+    public LocalDate getCreationDate() {
+        return this.creationDate;
+    }
 
-    public void setUpdateDate(LocalDate newUpdateDate){ this.updateDate = newUpdateDate; }
+    public LocalDate getUpdateDate() {
+        return this.updateDate;
+    }
+
+    public void setUpdateDate(LocalDate newUpdateDate) {
+        this.updateDate = newUpdateDate;
+    }
+
+    public static void resetidCounter() {
+        idCounter = 0l;
+    }
+
+    public Boolean inStock() {
+        return this.getQuantityInStock() > 0 ? true : false;
+    }
 }

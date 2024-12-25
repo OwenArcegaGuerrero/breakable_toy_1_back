@@ -3,16 +3,24 @@ package breakable.toy1.breakable_toy_1;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.time.LocalDate;
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 class BreakableToy1ApplicationTests {
+
+	@BeforeEach
+	void resestIdCounter() throws Exception{
+		ProductStorage storage = new ProductStorage();
+		storage.clear();
+	}
 
 	@Test
 	void ShouldCreateAProductLocally() throws Exception {
 		Product product = new Product("Tomato", "Fruit", 10.0, LocalDate.now(), 10l, LocalDate.now(), LocalDate.now());
 		assertThat(product).isNotNull();
+
+		assertThat(product.getId()).isEqualTo(1l);
 
 		String longName = "a".repeat(121);
 		Exception nameTooLong = assertThrows(Exception.class, () -> {
@@ -59,10 +67,13 @@ class BreakableToy1ApplicationTests {
 	@Test
 	void ShouldSaveProductLocally() throws Exception{
 		Product product = new Product("Tomato", "Fruit", 10.0, LocalDate.now(), 10l, LocalDate.now(), LocalDate.now());
+		Product product2 = new Product("Orange", "Fruit", 10.0, LocalDate.now(), 10l, LocalDate.now(), LocalDate.now());
+
 		ProductStorage storage = new ProductStorage();
 
 		storage.saveProduct(product);
-		assertThat(storage.getSize()).isEqualTo(1);
+		storage.saveProduct(product2);
+		assertThat(storage.getSize()).isEqualTo(2);
 
 		Exception nullSaveProduct = assertThrows(Exception.class, () -> {
 			storage.saveProduct(null);
@@ -73,12 +84,16 @@ class BreakableToy1ApplicationTests {
 	@Test
 	void ShouldReturnProductByIdLocally() throws Exception{
 		Product product = new Product("Tomato", "Fruit", 10.0, LocalDate.now(), 10l, LocalDate.now(), LocalDate.now());
+		Product product2 = new Product("Orange", "Fruit", 10.0, LocalDate.now(), 10l, LocalDate.now(), LocalDate.now());
+
 		ProductStorage storage = new ProductStorage();
-
+		
 		storage.saveProduct(product);
-		assertThat(storage.getProductById(1l)).isEqualTo(product);
+		storage.saveProduct(product2);
 
-		assertThat(storage.getProductById(2l)).isEqualTo(null);
+		assertThat(storage.getProductById(1l)).isEqualTo(product);
+		assertThat(storage.getProductById(2l)).isEqualTo(product2);
+		assertThat(storage.getProductById(3l)).isEqualTo(null);
 	}
 
 	@Test
@@ -127,4 +142,5 @@ class BreakableToy1ApplicationTests {
 		});
 		assertThat("Invalid Product").isEqualTo(nullProduct.getMessage());
 	}
+
 }
