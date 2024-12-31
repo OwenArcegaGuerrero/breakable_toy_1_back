@@ -96,7 +96,7 @@ public class BreakableToy1ApplicationAPITests {
 	void ShouldCreateProduct() throws Exception {
 		Product newProduct = new Product("Product F", "Category 3", 5.0, null, 20l, LocalDate.now(), LocalDate.now());
 
-		ResponseEntity<String> response = restTemplate.postForEntity("/products/create", newProduct, String.class);
+		ResponseEntity<String> response = restTemplate.postForEntity("/products", newProduct, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
 		URI locationOfNewProduct = response.getHeaders().getLocation();
@@ -132,7 +132,7 @@ public class BreakableToy1ApplicationAPITests {
 
 	@Test
 	void ShouldNotCreateProductWithEmptyBody() {
-		ResponseEntity<String> response = restTemplate.postForEntity("/products/create", null, String.class);
+		ResponseEntity<String> response = restTemplate.postForEntity("/products", null, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 	}
 
@@ -284,7 +284,7 @@ public class BreakableToy1ApplicationAPITests {
 	void ShouldFilterProductsByName() throws Exception {
 		Product newProduct = new Product("Product A", "Category 3", 5.0, null, 20l, LocalDate.now(), LocalDate.now());
 
-		ResponseEntity<String> postResponse = restTemplate.postForEntity("/products/create", newProduct, String.class);
+		ResponseEntity<String> postResponse = restTemplate.postForEntity("/products", newProduct, String.class);
 		assertThat(postResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
 		ResponseEntity<String> response = restTemplate.getForEntity("/products?name=Product A", String.class);
