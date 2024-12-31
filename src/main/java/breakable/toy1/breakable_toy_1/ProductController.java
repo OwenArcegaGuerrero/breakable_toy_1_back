@@ -50,7 +50,7 @@ public class ProductController {
         return ResponseEntity.ok(requestedProduct);
     }
 
-    @PostMapping("/create")
+    @PostMapping
     private ResponseEntity<Void> createProduct(@RequestBody Product Newproduct, UriComponentsBuilder ucb)
             throws Exception {
         Product savedProduct = storage.saveProduct(Newproduct);
