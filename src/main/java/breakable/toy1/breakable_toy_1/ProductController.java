@@ -5,7 +5,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.lang.reflect.Array;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,16 +32,19 @@ public class ProductController {
     @GetMapping
     private ResponseEntity<List<Product>> getAllProducts(
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) Boolean availability) {
+            @RequestParam(required = false) ArrayList<String> category,
+            @RequestParam(required = false) String availability) {
 
         List<Product> allProducts = storage.getAll();
 
         return ResponseEntity
                 .ok(allProducts.stream()
                         .filter(product -> name == null || product.getName().contains(name))
-                        .filter(product -> category == null || product.getCategory().contains(category))
-                        .filter(product -> availability == null || product.inStock() == availability)
+                        .filter(product -> category == null || category.isEmpty()
+                                || category.contains(product.getCategory()))
+                        .filter(product -> availability == null || "All".equals(availability)
+                                || ("In stock".equals(availability) && product.inStock())
+                                || ("Out of stock".equals(availability) && !product.inStock()))
                         .collect(Collectors.toList()));
     }
 
@@ -55,10 +60,14 @@ public class ProductController {
     @PostMapping
     private ResponseEntity<Void> createProduct(@RequestBody Product Newproduct, UriComponentsBuilder ucb)
             throws Exception {
-        Product savedProduct = storage.saveProduct(Newproduct);
-        URI locationOfNewProduct = ucb.path("products/{id}").buildAndExpand(savedProduct.getId()).toUri();
+        try {
+            Product savedProduct = storage.saveProduct(Newproduct);
+            URI locationOfNewProduct = ucb.path("products/{id}").buildAndExpand(savedProduct.getId()).toUri();
+            return ResponseEntity.created(locationOfNewProduct).build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
 
-        return ResponseEntity.created(locationOfNewProduct).build();
     }
 
     @PostMapping("/{id}/outofstock")
