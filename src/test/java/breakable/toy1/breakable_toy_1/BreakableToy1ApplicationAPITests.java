@@ -310,14 +310,15 @@ public class BreakableToy1ApplicationAPITests {
 		restTemplate.postForEntity("/products/1/outofstock", null, Void.class);
 		restTemplate.postForEntity("/products/2/outofstock", null, Void.class);
 
-		ResponseEntity<String> response = restTemplate.getForEntity("/products?availability=false", String.class);
+		ResponseEntity<String> response = restTemplate.getForEntity("/products?availability=Out of stock",
+				String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		DocumentContext documentContext = JsonPath.parse(response.getBody());
 		JSONArray stocksFalse = documentContext.read("$..quantityInStock");
 		assertThat(stocksFalse).containsExactlyInAnyOrder(0, 0);
 
-		response = restTemplate.getForEntity("/products?availability=true", String.class);
+		response = restTemplate.getForEntity("/products?availability=In stock", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		documentContext = JsonPath.parse(response.getBody());
@@ -342,7 +343,7 @@ public class BreakableToy1ApplicationAPITests {
 		JSONArray categories = documentContext.read("$..category");
 		assertThat(categories).containsExactlyInAnyOrder("Category 3", "Category 3");
 
-		response = restTemplate.getForEntity("/products?availability=true&category=Category 2", String.class);
+		response = restTemplate.getForEntity("/products?availability=In stock&category=Category 2", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		documentContext = JsonPath.parse(response.getBody());

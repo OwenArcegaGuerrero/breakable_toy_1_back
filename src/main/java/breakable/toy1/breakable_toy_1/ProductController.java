@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,22 +29,37 @@ public class ProductController {
     ProductStorage storage = new ProductStorage();
 
     @GetMapping
-    private ResponseEntity<List<Product>> getAllProducts(
+    private ResponseEntity<PageResponse<Product>> getAllProducts(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) ArrayList<String> category,
-            @RequestParam(required = false) String availability) {
+            @RequestParam(required = false) String availability,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        List<Product> allProducts = storage.getAll();
+        // Get all products and apply filters
+        List<Product> allProducts = storage.getAll().stream()
+                .filter(product -> name == null || product.getName().contains(name))
+                .filter(product -> category == null || category.isEmpty()
+                        || category.contains(product.getCategory()))
+                .filter(product -> availability == null || "All".equals(availability)
+                        || ("In stock".equals(availability) && product.inStock())
+                        || ("Out of stock".equals(availability) && !product.inStock()))
+                .collect(Collectors.toList());
 
-        return ResponseEntity
-                .ok(allProducts.stream()
-                        .filter(product -> name == null || product.getName().contains(name))
-                        .filter(product -> category == null || category.isEmpty()
-                                || category.contains(product.getCategory()))
-                        .filter(product -> availability == null || "All".equals(availability)
-                                || ("In stock".equals(availability) && product.inStock())
-                                || ("Out of stock".equals(availability) && !product.inStock()))
-                        .collect(Collectors.toList()));
+        // Calculate pagination
+        int start = page * size;
+        int end = Math.min(start + size, allProducts.size());
+        List<Product> paginatedProducts = start >= allProducts.size() ? new ArrayList<>()
+                : allProducts.subList(start, end);
+
+        // Create pagination response
+        PageResponse<Product> response = new PageResponse<>(
+                paginatedProducts,
+                page,
+                size,
+                allProducts.size());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
