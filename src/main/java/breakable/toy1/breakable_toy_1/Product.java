@@ -37,7 +37,7 @@ public class Product {
 
         this.expirationDate = expirationDate;
 
-        if (quantityInStock == null || quantityInStock <= 0l) {
+        if (quantityInStock == null) {
             throw new Exception("Invalid Quantity In Stock");
         } else {
             this.quantityInStock = quantityInStock;
