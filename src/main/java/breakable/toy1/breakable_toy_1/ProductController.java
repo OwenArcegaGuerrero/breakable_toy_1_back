@@ -34,7 +34,11 @@ public class ProductController {
             @RequestParam(required = false) ArrayList<String> category,
             @RequestParam(required = false) String availability,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder,
+            @RequestParam(required = false) String secondarySortBy,
+            @RequestParam(required = false) String secondarySortOrder) {
 
         // Get all products and apply filters
         List<Product> allProducts = storage.getAll().stream()
@@ -45,6 +49,14 @@ public class ProductController {
                         || ("In stock".equals(availability) && product.inStock())
                         || ("Out of stock".equals(availability) && !product.inStock()))
                 .collect(Collectors.toList());
+
+        // Apply sorting
+        ProductComparator comparator = new ProductComparator(
+                sortBy,
+                SortOrder.fromString(sortOrder),
+                secondarySortBy,
+                SortOrder.fromString(secondarySortOrder));
+        allProducts.sort(comparator);
 
         // Calculate pagination
         int start = page * size;
