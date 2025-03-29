@@ -4,12 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -31,10 +34,17 @@ public class BreakableToy1ApplicationAPITests {
 	@Autowired
 	ProductStorage storage;
 
+	/**
+	 * Sets up test data before each test.
+	 * Creates 5 products with different properties to test various scenarios.
+	 */
 	@BeforeEach
 	public void setUp() throws Exception {
+		// Clear all existing data
 		storage.clear();
+		Product.resetidCounter();
 
+		// Create test products
 		Product product1 = new Product("Product A", "Category 1", 10.0, null,
 				50l, LocalDate.now(), LocalDate.now());
 		Product product2 = new Product("Product B", "Category 2", 12.0,
@@ -47,6 +57,7 @@ public class BreakableToy1ApplicationAPITests {
 		Product product5 = new Product("Product E", "Category 3", 20.0, null,
 				50l, LocalDate.now(), LocalDate.now());
 
+		// Save test products
 		storage.saveProduct(product1);
 		storage.saveProduct(product2);
 		storage.saveProduct(product3);
@@ -54,8 +65,13 @@ public class BreakableToy1ApplicationAPITests {
 		storage.saveProduct(product5);
 	}
 
+	/**
+	 * Tests the retrieval of a product by its ID.
+	 * Verifies all product fields are correctly returned.
+	 */
 	@Test
-	void ShouldGetProductById() throws Exception {
+	@DisplayName("Should successfully retrieve a product by ID")
+	void shouldGetProductById() throws Exception {
 		ResponseEntity<String> response = restTemplate.getForEntity("/products/1", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -83,6 +99,107 @@ public class BreakableToy1ApplicationAPITests {
 
 		String updateDate = documentContext.read("updateDate");
 		assertThat(updateDate).isEqualTo(LocalDate.now().toString());
+	}
+
+	/**
+	 * Tests the pagination functionality of the products endpoint.
+	 * Verifies correct page size, total elements, and page information.
+	 */
+	@Test
+	@DisplayName("Should return paginated products")
+	void shouldReturnPaginatedProducts() {
+		ResponseEntity<String> response = restTemplate.getForEntity("/products?page=0&size=2", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray content = documentContext.read("$.content");
+		assertThat(content.size()).isEqualTo(2);
+
+		int pageNumber = documentContext.read("$.pageNumber");
+		assertThat(pageNumber).isEqualTo(0);
+
+		int pageSize = documentContext.read("$.pageSize");
+		assertThat(pageSize).isEqualTo(2);
+
+		int totalPages = documentContext.read("$.totalPages");
+		assertThat(totalPages).isEqualTo(3);
+
+		Number totalElements = documentContext.read("$.totalElements");
+		assertThat(totalElements.intValue()).isEqualTo(5);
+
+		boolean isFirst = documentContext.read("$.first");
+		assertThat(isFirst).isTrue();
+
+		boolean isLast = documentContext.read("$.last");
+		assertThat(isLast).isFalse();
+	}
+
+	/**
+	 * Tests the sorting functionality with a single sort field.
+	 * Verifies products are correctly sorted by name in ascending order.
+	 */
+	@Test
+	@DisplayName("Should return products sorted by single field")
+	void shouldReturnProductsSortedBySingleField() {
+		ResponseEntity<String> response = restTemplate.getForEntity("/products?sortBy=name&sortOrder=asc",
+				String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray names = documentContext.read("$.content[*].name");
+		assertThat(names).containsExactly(
+				"Product A", "Product B", "Product C", "Product D", "Product E");
+	}
+
+	/**
+	 * Tests the sorting functionality with two sort fields.
+	 * Verifies products are correctly sorted by category (primary) and price
+	 * (secondary).
+	 */
+	@Test
+	@DisplayName("Should return products sorted by multiple fields")
+	void shouldReturnProductsSortedByMultipleFields() {
+		ResponseEntity<String> response = restTemplate.getForEntity(
+				"/products?sortBy=category&sortOrder=asc&secondarySortBy=price&secondarySortOrder=desc",
+				String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray categories = documentContext.read("$.content[*].category");
+		JSONArray prices = documentContext.read("$.content[*].unitPrice");
+
+		// Verify category sorting
+		assertThat(categories).containsExactly(
+				"Category 1", "Category 1", "Category 2", "Category 2", "Category 3");
+
+		// Verify price sorting within same category
+		assertThat(prices).containsExactly(15.0, 10.0, 12.0, 8.0, 20.0);
+	}
+
+	/**
+	 * Tests the combination of filtering, sorting, and pagination.
+	 * Verifies all functionalities work together correctly.
+	 */
+	@Test
+	@DisplayName("Should handle filtering, sorting, and pagination together")
+	void shouldHandleFilteringSortingAndPagination() {
+		ResponseEntity<String> response = restTemplate.getForEntity(
+				"/products?category=Category 1&sortBy=price&sortOrder=desc&page=0&size=1",
+				String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray content = documentContext.read("$.content");
+		assertThat(content.size()).isEqualTo(1);
+
+		Number price = documentContext.read("$.content[0].unitPrice");
+		assertThat(price).isEqualTo(15.0);
+
+		String category = documentContext.read("$.content[0].category");
+		assertThat(category).isEqualTo("Category 1");
+
+		int totalPages = documentContext.read("$.totalPages");
+		assertThat(totalPages).isEqualTo(2);
 	}
 
 	@Test
@@ -142,34 +259,34 @@ public class BreakableToy1ApplicationAPITests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		DocumentContext documentContext = JsonPath.parse(response.getBody());
-		int length = documentContext.read("$.length()");
-		assertThat(length).isEqualTo(5);
+		JSONArray products = documentContext.read("$[*]");
+		assertThat(products.size()).isEqualTo(5);
 
-		JSONArray ids = documentContext.read("$..id");
+		JSONArray ids = documentContext.read("$[*].id");
 		assertThat(ids).isNotNull();
 
-		JSONArray names = documentContext.read("$..name");
+		JSONArray names = documentContext.read("$[*].name");
 		assertThat(names).containsExactlyInAnyOrder("Product A", "Product B", "Product C", "Product D", "Product E");
 
-		JSONArray categories = documentContext.read("$..category");
+		JSONArray categories = documentContext.read("$[*].category");
 		assertThat(categories).containsExactlyInAnyOrder("Category 1", "Category 2", "Category 1", "Category 2",
 				"Category 3");
 
-		JSONArray prices = documentContext.read("$..unitPrice");
+		JSONArray prices = documentContext.read("$[*].unitPrice");
 		assertThat(prices).containsExactlyInAnyOrder(10.0, 12.0, 15.0, 8.0, 20.0);
 
-		JSONArray expirationDates = documentContext.read("$..expirationDate");
+		JSONArray expirationDates = documentContext.read("$[*].expirationDate");
 		assertThat(expirationDates).containsExactlyInAnyOrder(null, LocalDate.now().toString(), null,
 				LocalDate.of(2025, 6, 10).toString(), null);
 
-		JSONArray stocks = documentContext.read("$..quantityInStock");
+		JSONArray stocks = documentContext.read("$[*].quantityInStock");
 		assertThat(stocks).containsExactlyInAnyOrder(50, 50, 50, 50, 50);
 
-		JSONArray creationDates = documentContext.read("$..creationDate");
+		JSONArray creationDates = documentContext.read("$[*].creationDate");
 		assertThat(creationDates).containsExactlyInAnyOrder(LocalDate.now().toString(), LocalDate.now().toString(),
 				LocalDate.now().toString(), LocalDate.now().toString(), LocalDate.now().toString());
 
-		JSONArray updateDates = documentContext.read("$..updateDate");
+		JSONArray updateDates = documentContext.read("$[*].updateDate");
 		assertThat(updateDates).containsExactlyInAnyOrder(LocalDate.now().toString(), LocalDate.now().toString(),
 				LocalDate.now().toString(), LocalDate.now().toString(), LocalDate.now().toString());
 	}
@@ -352,5 +469,47 @@ public class BreakableToy1ApplicationAPITests {
 
 		categories = documentContext.read("$..category");
 		assertThat(categories).containsExactlyInAnyOrder("Category 2");
+	}
+
+	/**
+	 * Tests error handling for invalid pagination parameters.
+	 * Verifies the API handles invalid page numbers gracefully.
+	 */
+	@Test
+	@DisplayName("Should handle invalid pagination parameters")
+	void shouldHandleInvalidPaginationParameters() {
+		ResponseEntity<String> response = restTemplate.getForEntity("/products?page=-1&size=10&sortBy=name",
+				String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray content = documentContext.read("$.content");
+		assertThat(content.size()).isEqualTo(5); // First page should be returned for negative page numbers
+
+		response = restTemplate.getForEntity("/products?page=999&size=10&sortBy=name", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		documentContext = JsonPath.parse(response.getBody());
+		content = documentContext.read("$.content");
+		assertThat(content.size()).isEqualTo(0); // Empty page for out of bounds
+	}
+
+	/**
+	 * Tests error handling for invalid sorting parameters.
+	 * Verifies the API defaults to name sorting when invalid sort field is
+	 * provided.
+	 */
+	@Test
+	@DisplayName("Should handle invalid sorting parameters")
+	void shouldHandleInvalidSortingParameters() {
+		ResponseEntity<String> response = restTemplate.getForEntity(
+				"/products?sortBy=invalid_field&sortOrder=invalid_order",
+				String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray names = documentContext.read("$.content[*].name");
+		assertThat(names).containsExactly(
+				"Product A", "Product B", "Product C", "Product D", "Product E");
 	}
 }
