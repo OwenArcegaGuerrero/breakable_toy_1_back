@@ -29,7 +29,7 @@ public class ProductController {
     ProductStorage storage = new ProductStorage();
 
     @GetMapping
-    private ResponseEntity<PageResponse<Product>> getAllProducts(
+    private ResponseEntity<Object> getAllProducts(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) ArrayList<String> category,
             @RequestParam(required = false) String availability,
@@ -39,6 +39,10 @@ public class ProductController {
             @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) String secondarySortBy,
             @RequestParam(required = false) String secondarySortOrder) {
+
+        // Validate and adjust pagination parameters
+        page = Math.max(0, page);
+        size = Math.max(1, Math.min(50, size)); // Limit page size between 1 and 50
 
         // Get all products and apply filters
         List<Product> allProducts = storage.getAll().stream()
@@ -50,19 +54,30 @@ public class ProductController {
                         || ("Out of stock".equals(availability) && !product.inStock()))
                 .collect(Collectors.toList());
 
-        // Apply sorting
-        ProductComparator comparator = new ProductComparator(
-                sortBy,
-                SortOrder.fromString(sortOrder),
-                secondarySortBy,
-                SortOrder.fromString(secondarySortOrder));
-        allProducts.sort(comparator);
+        // Apply sorting if parameters are provided
+        if (sortBy != null || secondarySortBy != null) {
+            ProductComparator comparator = new ProductComparator(
+                    sortBy,
+                    SortOrder.fromString(sortOrder),
+                    secondarySortBy,
+                    SortOrder.fromString(secondarySortOrder));
+            allProducts.sort(comparator);
+        }
+
+        // Return non-paginated response if no pagination parameters are explicitly set
+        if (page == 0 && size == 10 && !isPaginationRequested(name, category, availability, sortBy, secondarySortBy)) {
+            return ResponseEntity.ok(allProducts);
+        }
 
         // Calculate pagination
         int start = page * size;
-        int end = Math.min(start + size, allProducts.size());
-        List<Product> paginatedProducts = start >= allProducts.size() ? new ArrayList<>()
-                : allProducts.subList(start, end);
+        List<Product> paginatedProducts;
+        if (start >= allProducts.size()) {
+            paginatedProducts = new ArrayList<>();
+        } else {
+            int end = Math.min(start + size, allProducts.size());
+            paginatedProducts = allProducts.subList(start, end);
+        }
 
         // Create pagination response
         PageResponse<Product> response = new PageResponse<>(
@@ -72,6 +87,15 @@ public class ProductController {
                 allProducts.size());
 
         return ResponseEntity.ok(response);
+    }
+
+    private boolean isPaginationRequested(String name, ArrayList<String> category, String availability,
+            String sortBy, String secondarySortBy) {
+        return name != null ||
+                (category != null && !category.isEmpty()) ||
+                availability != null ||
+                sortBy != null ||
+                secondarySortBy != null;
     }
 
     @GetMapping("/{id}")
