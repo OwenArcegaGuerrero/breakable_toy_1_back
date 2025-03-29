@@ -103,7 +103,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void updateProduct(Long id, ProductCreateDTO updateDTO) {
+    public ProductDTO updateProduct(Long id, ProductCreateDTO updateDTO) {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
 
@@ -117,7 +117,8 @@ public class ProductServiceImpl implements ProductService {
                     existingProduct.getCreationDate(),
                     LocalDate.now());
             updatedProduct.setId(id);
-            productRepository.save(updatedProduct);
+            Product savedProduct = productRepository.save(updatedProduct);
+            return convertToDTO(savedProduct);
         } catch (Exception e) {
             throw new InvalidProductException(e.getMessage());
         }
@@ -125,9 +126,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProduct(Long id) {
-        if (!productRepository.findById(id).isPresent()) {
-            throw new ProductNotFoundException(id);
-        }
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
         productRepository.deleteById(id);
     }
 
