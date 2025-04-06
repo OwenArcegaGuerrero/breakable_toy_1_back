@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/api/v1/products")
+@RequestMapping("/products")
 @CrossOrigin(origins = "${cors.allowed-origins:http://localhost:8080}")
 @Validated
 public class ProductController {
